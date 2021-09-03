@@ -1,4 +1,4 @@
-# @domain.js/cron cron encode and decode functions for domain.js internal
+# @domain.js/cron 计划任务允许linux 计划任务格式的时刻表，也允许时间间隔来控制 
 
 [![Build status](https://travis-ci.com/domain-js/cron.svg?branch=master)](https://travis-ci.com/domain-js/cron)
 [![codecov](https://codecov.io/gh/domain-js/cron/branch/master/graph/badge.svg)](https://codecov.io/gh/domain-js/cron)
