@@ -23,9 +23,7 @@
   },
   "homepage": "https://github.com/domain-js/cron#readme",
   "dependencies": {
-    "@types/crypto-js": "^4.0.2",
     "cron-parser": "^3.5.0",
-    "crypto-js": "^4.0.0",
     "human-interval": "^2.0.1"
   },
   "devDependencies": {
