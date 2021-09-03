@@ -18,8 +18,13 @@
 | cia | `无` | `regist`, `link`, `submit` | @domain.js/cia 模块 |
 
 
-# Usage
+# method
+* regist 注册计划任务
+* start 启动计划任务系统
+* getStats 获取计划任务统计信息
 
+
+# Sample code
 ```javascript
 const Cron = require('@domain.js/cron');
 
