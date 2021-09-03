@@ -40,6 +40,9 @@ export function main(cnf: Cnf, deps: Deps) {
   // 注册信息
   const registed: Registed = {};
 
+  // 是否已经启动, 记录的是启动时间
+  let startedAt: Date;
+
   // 计算具体下次执行还有多少毫秒
   const calcNextMS = (intervalStr: string) => {
     const interval = human(intervalStr) || parser.parseExpression(intervalStr, parserOpt);
@@ -81,6 +84,7 @@ export function main(cnf: Cnf, deps: Deps) {
   // interval string | number 任务执行间隔
   // startAt string 任务开始于
   const regist = (name: string, intervalStr: string, startAt: string) => {
+    if (startedAt) throw Error("计划任务系统已经启动，禁止注册");
     if (registed[name]) throw Error(`Same name cron has been registed: ${name}`);
 
     // 写入到注册变量上去。后续持续执行需要用到
@@ -97,6 +101,8 @@ export function main(cnf: Cnf, deps: Deps) {
   };
 
   const start = () => {
+    if (startedAt) throw Error("已经启动，不能重复启动");
+    startedAt = new Date();
     for (const name of Object.keys(registed)) trigger(name);
   };
 

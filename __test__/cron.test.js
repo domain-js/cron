@@ -73,6 +73,11 @@ describe("cron", () => {
       expect(stats.test2.triggeredAt).toBeGreaterThan(Date.now() - 5000);
       expect(stats.test2.triggeredAt).toBeLessThanOrEqual(Date.now());
     });
+
+    it("case2 many times to start error", async () => {
+      expect(() => cron.start()).toThrow("不能重复启动");
+      expect(() => cron.regist("hello", "3 minutes")).toThrow("计划任务系统已经启动");
+    });
   });
 });
 
