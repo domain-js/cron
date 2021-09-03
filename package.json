@@ -1,0 +1,36 @@
+{
+  "name": "@domain.js/cron",
+  "version": "0.1.0",
+  "description": "domain.js cron plugin",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "export NODE_ENV=test && jest ./__test__ --coverage",
+    "test:watch": "export NODE_ENV=test && jest ./__test__ --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/domain-js/cron.git"
+  },
+  "keywords": [
+    "cron",
+    "domain.js"
+  ],
+  "author": "Redstone Zhao",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/domain-js/cron/issues"
+  },
+  "homepage": "https://github.com/domain-js/cron#readme",
+  "dependencies": {
+    "@types/crypto-js": "^4.0.2",
+    "cron-parser": "^3.5.0",
+    "crypto-js": "^4.0.0",
+    "human-interval": "^2.0.1"
+  },
+  "devDependencies": {
+    "codecov": "^3.8.3",
+    "jest": "^24.9.0",
+    "typescript": "^4.3.5"
+  }
+}
