@@ -33,7 +33,7 @@ function main(cnf, deps) {
     const trigger = (name) => {
         const opt = registed[name];
         let timeoutMS = calcNextMS(opt.intervalStr);
-        if (opt.count === 0 && opt.startAt) {
+        if (opt.times === 0 && opt.startAt) {
             // 第一次
             const startAt = human(opt.startAt);
             if (!startAt)
@@ -41,9 +41,16 @@ function main(cnf, deps) {
             timeoutMS = startAt;
         }
         setTimeout(() => {
-            opt.count += 1;
+            opt.times += 1;
             opt.triggeredAt = Date.now();
-            cia.submit(`Cron::${name}`, opt.count, () => {
+            cia.submit(`Cron::${name}`, opt.times, ({ cronJob: [err, , totalMS] }) => {
+                if (err) {
+                    opt.failds += 1;
+                }
+                else {
+                    opt.dones += 1;
+                    opt.totalMS += totalMS;
+                }
                 trigger(name);
             });
         }, timeoutMS);
@@ -58,7 +65,10 @@ function main(cnf, deps) {
             throw Error(`Same name cron has been registed: ${name}`);
         // 写入到注册变量上去。后续持续执行需要用到
         registed[name] = {
-            count: 0,
+            times: 0,
+            dones: 0,
+            failds: 0,
+            totalMS: 0,
             triggeredAt: 0,
             intervalStr,
             startAt,
@@ -74,7 +84,15 @@ function main(cnf, deps) {
         for (const name of Object.keys(registed))
             trigger(name);
     };
-    const getStats = () => registed;
+    const getStats = () => {
+        const stats = [];
+        for (const name of Object.keys(registed)) {
+            const { times, dones, failds, totalMS } = registed[name];
+            const avgMS = dones ? totalMS / dones : null;
+            stats.push({ name, times, dones, failds, totalMS, avgMS });
+        }
+        return stats;
+    };
     return { regist, start, getStats };
 }
 exports.main = main;

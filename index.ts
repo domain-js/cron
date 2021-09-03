@@ -13,16 +13,23 @@ interface waiter {
   validator?: any;
 }
 
+interface callbackArg {
+  cronJob: [Error | null, any, number];
+}
+
 interface Deps {
   cia: {
     regist: (name: string, validator: any, waiters: waiter[]) => void;
-    submit: (name: string, count: number, callback: any) => void;
+    submit: (name: string, times: number, callback: (arg: callbackArg) => void) => void;
   };
 }
 
 interface Registed {
   [propName: string]: {
-    count: number;
+    times: number; // 触发多少次
+    dones: number; // 执行成功多少次
+    failds: number; // 失败次数
+    totalMS: number; // 执行总共消耗的时间(毫秒)
     triggeredAt: number;
     intervalStr: string;
     startAt?: string;
@@ -65,16 +72,22 @@ export function main(cnf: Cnf, deps: Deps) {
     const opt = registed[name];
 
     let timeoutMS = calcNextMS(opt.intervalStr);
-    if (opt.count === 0 && opt.startAt) {
+    if (opt.times === 0 && opt.startAt) {
       // 第一次
       const startAt = human(opt.startAt);
       if (!startAt) throw Error("startAt 定义不合法");
       timeoutMS = startAt;
     }
     setTimeout(() => {
-      opt.count += 1;
+      opt.times += 1;
       opt.triggeredAt = Date.now();
-      cia.submit(`Cron::${name}`, opt.count, () => {
+      cia.submit(`Cron::${name}`, opt.times, ({ cronJob: [err, , totalMS] }) => {
+        if (err) {
+          opt.failds += 1;
+        } else {
+          opt.dones += 1;
+          opt.totalMS += totalMS;
+        }
         trigger(name);
       });
     }, timeoutMS);
@@ -89,7 +102,10 @@ export function main(cnf: Cnf, deps: Deps) {
 
     // 写入到注册变量上去。后续持续执行需要用到
     registed[name] = {
-      count: 0,
+      times: 0,
+      dones: 0,
+      failds: 0,
+      totalMS: 0,
       triggeredAt: 0,
       intervalStr,
       startAt,
@@ -106,7 +122,17 @@ export function main(cnf: Cnf, deps: Deps) {
     for (const name of Object.keys(registed)) trigger(name);
   };
 
-  const getStats = () => registed;
+  const getStats = () => {
+    const stats = [];
+    for (const name of Object.keys(registed)) {
+      const { times, dones, failds, totalMS } = registed[name];
+      const avgMS = dones ? totalMS / dones : null;
+
+      stats.push({ name, times, dones, failds, totalMS, avgMS });
+    }
+
+    return stats;
+  };
 
   return { regist, start, getStats };
 }

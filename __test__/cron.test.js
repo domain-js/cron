@@ -35,43 +35,37 @@ describe("cron", () => {
 
   describe("getStats", () => {
     it("case1", async () => {
-      expect(cron.getStats()).toEqual({
-        test: { count: 0, intervalStr: "1 seconds", startAt: undefined, triggeredAt: 0 },
-        test2: { count: 0, intervalStr: "2 hours", startAt: "1 seconds", triggeredAt: 0 },
-      });
+      expect(cron.getStats()).toEqual([
+        { name: "test", dones: 0, times: 0, failds: 0, totalMS: 0, avgMS: null },
+        { name: "test2", dones: 0, times: 0, failds: 0, totalMS: 0, avgMS: null },
+      ]);
     });
   });
 
   describe("start", () => {
     it("case1", async () => {
       cron.start();
-      expect(cron.getStats()).toMatchObject({
-        test: { count: 0, intervalStr: "1 seconds", startAt: undefined },
-        test2: { count: 0, intervalStr: "2 hours", startAt: "1 seconds" },
-      });
+      expect(cron.getStats()).toEqual([
+        { name: "test", dones: 0, times: 0, failds: 0, totalMS: 0, avgMS: null },
+        { name: "test2", dones: 0, times: 0, failds: 0, totalMS: 0, avgMS: null },
+      ]);
       await sleep(2000);
       expect(cia.submit.mock.calls.length).toBe(2);
-      const [name1, count1, fn1] = cia.submit.mock.calls.pop();
+      const [name1, times1, fn1] = cia.submit.mock.calls.pop();
       expect(name1).toBe("Cron::test2");
-      expect(count1).toBe(1);
+      expect(times1).toBe(1);
       expect(fn1.toString()).toMatch("trigger");
 
-      const [name2, count2, fn2] = cia.submit.mock.calls.pop();
+      const [name2, times2, fn2] = cia.submit.mock.calls.pop();
       expect(name2).toBe("Cron::test");
-      expect(count2).toBe(1);
+      expect(times2).toBe(1);
       expect(fn2.toString()).toMatch("trigger");
 
       const stats = cron.getStats();
-      expect(stats).toMatchObject({
-        test: { count: 1, intervalStr: "1 seconds", startAt: undefined },
-        test2: { count: 1, intervalStr: "2 hours", startAt: "1 seconds" },
-      });
-
-      expect(stats.test.triggeredAt).toBeGreaterThan(Date.now() - 5000);
-      expect(stats.test.triggeredAt).toBeLessThanOrEqual(Date.now());
-
-      expect(stats.test2.triggeredAt).toBeGreaterThan(Date.now() - 5000);
-      expect(stats.test2.triggeredAt).toBeLessThanOrEqual(Date.now());
+      expect(stats).toEqual([
+        { name: "test", dones: 0, times: 1, failds: 0, totalMS: 0, avgMS: null },
+        { name: "test2", dones: 0, times: 1, failds: 0, totalMS: 0, avgMS: null },
+      ]);
     });
 
     it("case2 many times to start error", async () => {
@@ -105,22 +99,36 @@ describe("cron special", () => {
       cron.start();
       await sleep(2010);
       expect(cia.submit.mock.calls.length).toBe(1);
-      (() => {
-        const [name, count, fn] = cia.submit.mock.calls.pop();
+      await (async () => {
+        const [name, times, fn] = cia.submit.mock.calls.pop();
         expect(name).toBe("Cron::test");
-        expect(count).toBe(1);
+        expect(times).toBe(1);
         expect(fn.toString()).toMatch("trigger");
-        fn();
+        await sleep(30);
+        fn({ cronJob: [null, null, 30] });
       })();
 
       await sleep(2010);
       expect(cia.submit.mock.calls.length).toBe(1);
-      (() => {
-        const [name, count, fn] = cia.submit.mock.calls.pop();
+      await (async () => {
+        const [name, times, fn] = cia.submit.mock.calls.pop();
         expect(name).toBe("Cron::test");
-        expect(count).toBe(2);
+        expect(times).toBe(2);
         expect(fn.toString()).toMatch("trigger");
+        fn({ cronJob: [Error("msg"), null, 30] });
       })();
+
+      const stats = cron.getStats();
+      expect(stats).toEqual([
+        {
+          name: "test",
+          times: 2,
+          dones: 1,
+          failds: 1,
+          totalMS: 30,
+          avgMS: 30,
+        },
+      ]);
     });
   });
 
