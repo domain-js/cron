@@ -29,7 +29,7 @@ interface Registed {
   };
 }
 
-function Main(cnf: Cnf, deps: Deps) {
+export function main(cnf: Cnf, deps: Deps) {
   const { cron = {} } = cnf;
 
   const ciaTaskType = "cronJob";
@@ -60,16 +60,17 @@ function Main(cnf: Cnf, deps: Deps) {
   // 触发
   const trigger = (name: string) => {
     const opt = registed[name];
-    opt.count += 1;
 
     let timeoutMS = calcNextMS(opt.intervalStr);
-    if (opt.count === 1 && opt.startAt) {
+    if (opt.count === 0 && opt.startAt) {
       // 第一次
       const startAt = human(opt.startAt);
       if (!startAt) throw Error("startAt 定义不合法");
       timeoutMS = startAt;
     }
     setTimeout(() => {
+      opt.count += 1;
+      opt.triggeredAt = Date.now();
       cia.submit(`Cron::${name}`, opt.count, () => {
         trigger(name);
       });
@@ -80,6 +81,8 @@ function Main(cnf: Cnf, deps: Deps) {
   // interval string | number 任务执行间隔
   // startAt string 任务开始于
   const regist = (name: string, intervalStr: string, startAt: string) => {
+    if (registed[name]) throw Error(`Same name cron has been registed: ${name}`);
+
     // 写入到注册变量上去。后续持续执行需要用到
     registed[name] = {
       count: 0,
@@ -102,6 +105,4 @@ function Main(cnf: Cnf, deps: Deps) {
   return { regist, start, getStats };
 }
 
-Main.Deps = ["cia"];
-
-export = Main;
+main.Deps = ["cia"];
