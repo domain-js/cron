@@ -42,7 +42,6 @@ export function main(cnf: Cnf, deps: Deps) {
   const ciaTaskType = "cronJob";
   const { cia } = deps;
   const { tz = "Asia/Shanghai" } = cron;
-  const parserOpt = { tz };
 
   // 注册信息
   const registed: Registed = {};
@@ -52,7 +51,7 @@ export function main(cnf: Cnf, deps: Deps) {
 
   // 计算具体下次执行还有多少毫秒
   const calcNextMS = (intervalStr: string) => {
-    const interval = human(intervalStr) || parser.parseExpression(intervalStr, parserOpt);
+    const interval = human(intervalStr) || parser.parseExpression(intervalStr, { tz });
     if (typeof interval === "number") return interval;
 
     //  *    *    *    *    *    *

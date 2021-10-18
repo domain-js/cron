@@ -8,14 +8,13 @@ function main(cnf, deps) {
     const ciaTaskType = "cronJob";
     const { cia } = deps;
     const { tz = "Asia/Shanghai" } = cron;
-    const parserOpt = { tz };
     // 注册信息
     const registed = {};
     // 是否已经启动, 记录的是启动时间
     let startedAt;
     // 计算具体下次执行还有多少毫秒
     const calcNextMS = (intervalStr) => {
-        const interval = human(intervalStr) || parser.parseExpression(intervalStr, parserOpt);
+        const interval = human(intervalStr) || parser.parseExpression(intervalStr, { tz });
         if (typeof interval === "number")
             return interval;
         //  *    *    *    *    *    *
